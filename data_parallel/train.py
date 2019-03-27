@@ -21,9 +21,13 @@ from tensorboardX import SummaryWriter
 parser = argparse.ArgumentParser(description='cifar10 classification models')
 parser.add_argument('--lr', default=0.1, help='')
 parser.add_argument('--resume', default=None, help='')
-parser.add_argument('--batch_size', type=int, default=512, help='')
+parser.add_argument('--batch_size', type=int, default=768, help='')
 parser.add_argument('--num_worker', type=int, default=4, help='')
+parser.add_argument("--gpu_devices", type=int, nargs='+', default=None, help="")
 args = parser.parse_args()
+
+gpu_devices = ','.join([str(id) for id in args.gpu_devices])
+os.environ["CUDA_VISIBLE_DEVICES"] = gpu_devices
 
 
 def main():
@@ -51,13 +55,15 @@ def main():
     print('==> Making model..')
 
     net = pyramidnet()
+    net = nn.DataParallel(net)
     net = net.to(device)
     num_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
     print('The number of parameters of model is', num_params)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=args.lr, 
-                          momentum=0.9, weight_decay=1e-4)
+    optimizer = optim.Adam(net.parameters(), lr=args.lr)
+    # optimizer = optim.SGD(net.parameters(), lr=args.lr, 
+    #                       momentum=0.9, weight_decay=1e-4)
     
     train(net, criterion, optimizer, train_loader, device)
             
