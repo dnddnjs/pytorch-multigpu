@@ -1,3 +1,6 @@
+import os
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -111,9 +114,17 @@ class PyramidNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.fc_out(x)
         return x
+    
+    def save(self, path_to_checkpoints_dir, step):
+        path_to_checkpoint = os.path.join(path_to_checkpoints_dir, 'model-{:s}-{:d}.pth'.format(time.strftime('%Y%m%d%H%M'), step))
+        torch.save(self.state_dict(), path_to_checkpoint)
+        return path_to_checkpoint
 
+    def load(self, path_to_checkpoint):
+        self.load_state_dict(torch.load(path_to_checkpoint))
+        return self
 
 def pyramidnet():
-	block = ResidualBlock
-	model = PyramidNet(num_layers=18, alpha=270, block=block)
-	return model
+    block = ResidualBlock
+    model = PyramidNet(num_layers=18, alpha=270, block=block)
+    return model
